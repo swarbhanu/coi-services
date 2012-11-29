@@ -114,10 +114,10 @@ class UserNotificationTest(PyonTestCase):
         #-------------------------------------------------------------------------------------------------------------------
 
         notification_request = NotificationRequest(name='a name',
-            origin = 'origin_1',
-            origin_type = 'origin_type_1',
-            event_type= 'event_type_1',
-            event_subtype = 'event_subtype_1' )
+            origins = ['origin_1'],
+            origin_types = ['origin_type_1'],
+            event_types= ['event_type_1'],
+            event_subtypes = ['event_subtype_1'] )
 
         #-------------------------------------------------------------------------------------------------------------------
         # execution
@@ -145,10 +145,10 @@ class UserNotificationTest(PyonTestCase):
 
         # Create a notification object
         notification_request = NotificationRequest(name='Setting_email',
-            origin = 'origin',
-            origin_type = 'origin_type',
-            event_type= 'event_type',
-            event_subtype = 'event_subtype')
+            origins = ['origin'],
+            origin_types = ['origin_type'],
+            event_types= ['event_type'],
+            event_subtypes = ['event_subtype'])
 
         with self.assertRaises(BadRequest) as br:
             notification_id =  self.user_notification.create_notification(notification=notification_request)
@@ -190,10 +190,10 @@ class UserNotificationTest(PyonTestCase):
         #-------------------------------------------------------------------------------------------------------------------
 
         notification_request = NotificationRequest(name='a name',
-            origin = 'origin_1',
-            origin_type = 'origin_type_1',
-            event_type= 'event_type_1',
-            event_subtype = 'event_subtype_1' )
+            origins = ['origin_1'],
+            origin_types = ['origin_type_1'],
+            event_types= ['event_type_1'],
+            event_subtypes = ['event_subtype_1'] )
 
         notification_request._id = 'an id'
 
@@ -227,10 +227,10 @@ class UserNotificationTest(PyonTestCase):
         #-------------------------------------------------------------------------------------------------------------------
 
         notification_request = NotificationRequest(name='a name',
-            origin = 'origin_1',
-            origin_type = 'origin_type_1',
-            event_type= 'event_type_1',
-            event_subtype = 'event_subtype_1',
+            origins = ['origin_1'],
+            origin_types = ['origin_type_1'],
+            event_types= ['event_type_1'],
+            event_subtypes = ['event_subtype_1'],
             temporal_bounds = TemporalBounds())
         notification_request.temporal_bounds.start_datetime = ''
 
@@ -348,14 +348,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name= 'notification_1',
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins= ["instrument_1"],
+            origin_types= ["type_1"],
+            event_types=['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name='notification_2',
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins= ["instrument_2"],
+            origin_types=["type_2"],
+            event_types=['DetectionEvent'])
 
         #--------------------------------------------------------------------------------------
         # Create a user and get the user_id
@@ -444,16 +444,16 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = 'notification_1',
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent',
-            event_subtype = 'subtype_1')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'],
+            event_subtypes = ['subtype_1'])
 
         notification_request_2 = NotificationRequest(   name = 'notification_2',
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent',
-            event_subtype = 'subtype_2')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'],
+            event_subtypes = ['subtype_2'])
 
 
         #--------------------------------------------------------------------------------------
@@ -625,16 +625,16 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent',
-            event_subtype = 'subtype_1')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'],
+            event_subtypes = ['subtype_1'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent',
-            event_subtype = 'subtype_2')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'],
+            event_subtypes = ['subtype_2'])
 
 
         #--------------------------------------------------------------------------------------
@@ -795,20 +795,20 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'])
 
 
         notification_request_3 = NotificationRequest(   name = "notification_3",
-            origin="instrument_3",
-            origin_type="type_3",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_3"],
+            origin_types = ["type_3"],
+            event_types = ['ResourceLifecycleEvent'])
 
 
 
@@ -930,14 +930,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'])
 
 
         #--------------------------------------------------------------------------------------
@@ -1028,14 +1028,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_1 = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'])
 
 
         #--------------------------------------------------------------------------------------
@@ -1098,14 +1098,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'])
 
         notification_id1 =  self.unsc.create_notification(notification=notification_request_correct, user_id=user_id)
         notification_id2 =  self.unsc.create_notification(notification=notification_request_2, user_id=user_id)
@@ -1147,9 +1147,9 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_id =  self.unsc.create_notification(notification=notification_request_correct, user_id=user_id)
 
@@ -1349,14 +1349,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['ResourceLifecycleEvent'])
 
         #--------------------------------------------------------------------------------------
         # Create a notification using UNS. This should cause the user_info to be updated
@@ -1460,14 +1460,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_request_correct = NotificationRequest(   name = "notification_1",
-            origin="instrument_1",
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = ["instrument_1"],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_request_2 = NotificationRequest(   name = "notification_2",
-            origin="instrument_2",
-            origin_type="type_2",
-            event_type='DetectionEvent')
+            origins = ["instrument_2"],
+            origin_types = ["type_2"],
+            event_types = ['DetectionEvent'])
 
         #--------------------------------------------------------------------------------------
         # Create notifications using UNS.
@@ -1602,24 +1602,24 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         #--------------------------------------------------------------------------------------
 
         notification_active_1 = NotificationRequest(   name = "notification_1",
-            origin=data_product_id,
-            origin_type="type_1",
-            event_type='ResourceLifecycleEvent')
+            origins = [data_product_id],
+            origin_types = ["type_1"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_active_2 = NotificationRequest(   name = "notification_2",
-            origin=data_product_id,
-            origin_type="type_2",
-            event_type='ResourceLifecycleEvent')
+            origins = [data_product_id],
+            origin_types = ["type_2"],
+            event_types = ['ResourceLifecycleEvent'])
 
         notification_past_1 = NotificationRequest(   name = "notification_3_to_be_retired",
-            origin=data_product_id,
-            origin_type="type_3",
-            event_type='DetectionEvent')
+            origins = [data_product_id],
+            origin_types = ["type_3"],
+            event_types = ['DetectionEvent'])
 
         notification_past_2 = NotificationRequest(   name = "notification_4_to_be_retired",
-            origin=data_product_id,
-            origin_type="type_4",
-            event_type='DetectionEvent')
+            origins = [data_product_id],
+            origin_types = ["type_4"],
+            event_types = ['DetectionEvent'])
 
         #--------------------------------------------------------------------------------------
         # Create notifications using UNS.
