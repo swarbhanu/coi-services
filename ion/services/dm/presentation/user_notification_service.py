@@ -676,22 +676,34 @@ class UserNotificationService(BaseUserNotificationService):
                 if notification.temporal_bounds.end_datetime:
                     continue
 
-                if notification.origin:
-                    search_origin = 'search "origin" is "%s" from "events_index"' % notification.origin
+                # Query sentence for origins
+                if len(notification.origins) > 0:
+                    origins = [notification.origins]
+                    search_origins = 'search "origin" is "%s" from "events_index"' % origins.pop()
+                    for origin in origins:
+                        search_origins += 'or' + 'search "origin" is "%s" from "events_index"' % origin
                 else:
-                    search_origin = 'search "origin" is "*" from "events_index"'
+                    search_origins = 'search "origin" is "*" from "events_index"'
 
-                if notification.origin_type:
-                    search_origin_type= 'search "origin_type" is "%s" from "events_index"' % notification.origin_type
+                # Query sentence for origin_types
+                if len(notification.origin_types) > 0:
+                    origin_types = [notification.origin_types]
+                    search_origin_types = 'search "origin_type" is "%s" from "events_index"' % origin_types.pop()
+                    for origin_type in origin_types:
+                        search_origin_types += 'or' + 'search "origin_type" is "%s" from "events_index"' % origin_type
                 else:
-                    search_origin_type= 'search "origin_type" is "*" from "events_index"'
+                    search_origin_types = 'search "origin_type" is "*" from "events_index"'
 
-                if notification.event_type:
-                    search_event_type = 'search "type_" is "%s" from "events_index"' % notification.event_type
+                # Query sentence for event types
+                if len(notification.event_types) > 0:
+                    event_types = [notification.event_types]
+                    search_event_types = 'search "type_" is "%s" from "events_index"' % event_types.pop()
+                    for event_type in event_types:
+                        search_event_types += 'or' + 'search "type_" is "%s" from "events_index"' % event_type
                 else:
-                    search_event_type = 'search "type_" is "*" from "events_index"'
+                    search_event_types = 'search "type_" is "*" from "events_index"'
 
-                search_string = search_time + ' and ' + search_origin + ' and ' + search_origin_type + ' and ' + search_event_type
+                search_string = search_time + ' and ' + search_origins + ' and ' + search_origin_types + ' and ' + search_event_types
 
                 # get the list of ids corresponding to the events
                 ret_vals = self.discovery.parse(search_string)
@@ -885,9 +897,9 @@ class UserNotificationService(BaseUserNotificationService):
 
         for id, notif in notifications.iteritems():
             if notif.name == notification.name and \
-            notif.origin == notification.origin and \
-            notif.origin_type == notification.origin_type and \
-            notif.event_type == notification.event_type:
+            notif.origins == notification.origins and \
+            notif.origin_types == notification.origin_types and \
+            notif.event_types == notification.event_types:
                 return id
         return None
 
@@ -895,9 +907,9 @@ class UserNotificationService(BaseUserNotificationService):
 
         for id, notif in notifications.iteritems():
             if notif.name == old_notification.name and\
-               notif.origin == old_notification.origin and\
-               notif.origin_type == old_notification.origin_type and\
-               notif.event_type == old_notification.event_type:
+               notif.origins == old_notification.origins and\
+               notif.origin_types == old_notification.origin_types and\
+               notif.event_types == old_notification.event_types:
                 notifications.pop(id)
                 notifications[id] = new_notification
                 break
