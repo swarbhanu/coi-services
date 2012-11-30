@@ -96,13 +96,14 @@ def setting_up_smtp_client():
 
         log.debug('Using the real SMTP library to send email notifications!')
 
-        smtp_client = smtplib.SMTP(smtp_host)
-        smtp_client.ehlo()
-        smtp_client.starttls()
-        smtp_client.login(smtp_sender, smtp_password)
+#        todo for secured emails, uncomment the lines below
 
-#        todo for unsecured emails, just have this line below, where the smtp client server is created
 #        smtp_client = smtplib.SMTP(smtp_host)
+#        smtp_client.ehlo()
+#        smtp_client.starttls()
+#        smtp_client.login(smtp_sender, smtp_password)
+
+        smtp_client = smtplib.SMTP(smtp_host)
     else:
         log.debug('Using a fake SMTP library to simulate email notifications!')
         smtp_client = fake_smtplib.SMTP(smtp_host)
