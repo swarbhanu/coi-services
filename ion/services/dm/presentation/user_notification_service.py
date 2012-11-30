@@ -264,7 +264,7 @@ class UserNotificationService(BaseUserNotificationService):
         user = self.event_processor.add_notification_for_user(notification_request=notification, user_id=user_id)
 
         # Update the user info object with the notification
-        self.update_user_info_dictionary(user_id=user_id, new_notification=notification, old_notification=None)
+        self._update_user_info_dictionary(user_id=user_id, new_notification=notification, old_notification=None)
 
         #-------------------------------------------------------------------------------------------------------------------
         # Generate an event that can be picked by a notification worker so that it can update its user_info dictionary
@@ -321,13 +321,13 @@ class UserNotificationService(BaseUserNotificationService):
         # Update the UserInfo object
         #------------------------------------------------------------------------------------
 
-        user = self.update_user_info_object(user_id, notification, old_notification)
+        user = self._update_user_info_object(user_id, notification, old_notification)
 
         #------------------------------------------------------------------------------------
         # Update the user_info dictionary maintained by UNS
         #------------------------------------------------------------------------------------
 
-        self.update_user_info_dictionary(user_id, notification, old_notification)
+        self._update_user_info_dictionary(user_id, notification, old_notification)
 
         #-------------------------------------------------------------------------------------------------------------------
         # Generate an event that can be picked by notification workers so that they can update their user_info dictionary
@@ -379,7 +379,7 @@ class UserNotificationService(BaseUserNotificationService):
         #-------------------------------------------------------------------------------------------------------------------
 
         for user_id in self.user_info.iterkeys():
-            self.update_user_info_dictionary(user_id, notification_request, old_notification)
+            self._update_user_info_dictionary(user_id, notification_request, old_notification)
 
         #-------------------------------------------------------------------------------------------------------------------
         # Generate an event that can be picked by a notification worker so that it can update its user_info dictionary
@@ -717,9 +717,9 @@ class UserNotificationService(BaseUserNotificationService):
 
             # send a notification email to each user using a _send_email() method
             if events_for_message:
-                self.format_and_send_email(events_for_message, user_id)
+                self._format_and_send_email(events_for_message, user_id)
 
-    def format_and_send_email(self, events_for_message, user_id):
+    def _format_and_send_email(self, events_for_message, user_id):
         """
         Format the message for a particular user containing information about the events he is to be notified about
 
@@ -759,12 +759,12 @@ class UserNotificationService(BaseUserNotificationService):
 
         msg_subject = "(SysName: " + get_sys_name() + ") ION event "
 
-        self.send_batch_email(  msg_body = msg_body,
+        self._send_batch_email(  msg_body = msg_body,
             msg_subject = msg_subject,
             msg_recipient=self.user_info[user_id]['user_contact'].email,
             smtp_client=self.smtp_client )
 
-    def send_batch_email(self, msg_body, msg_subject, msg_recipient, smtp_client):
+    def _send_batch_email(self, msg_body, msg_subject, msg_recipient, smtp_client):
         """
         Send the email
 
@@ -785,7 +785,7 @@ class UserNotificationService(BaseUserNotificationService):
 
         smtp_client.sendmail(smtp_sender, msg_recipient, msg.as_string())
 
-    def update_user_info_object(self, user_id, new_notification, old_notification):
+    def _update_user_info_object(self, user_id, new_notification, old_notification):
         """
         Update the UserInfo object. If the passed in parameter, od_notification, is None, it does not need to remove the old notification
 
@@ -827,7 +827,7 @@ class UserNotificationService(BaseUserNotificationService):
 
         return user
 
-    def update_user_info_dictionary(self, user_id, new_notification, old_notification):
+    def _update_user_info_dictionary(self, user_id, new_notification, old_notification):
 
         notifications = []
         user = self.clients.resource_registry.read(user_id)

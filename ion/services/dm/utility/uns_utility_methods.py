@@ -218,14 +218,14 @@ def calculate_reverse_user_info(user_info=None):
 
     The reverse_user_info dictionary has the following form:
 
-    reverse_user_info = {'event_type' : { <event_type_1> : ['user_1', 'user_2'..],
-                                             <event_type_2> : ['user_3'],... },
+    reverse_user_info = {'event_type' : { <event_type_1> : ['user_1', 'user_2'],
+                                             <event_type_2> : ['user_3', 'user_4'],... },
 
-                        'event_subtype' : { <event_subtype_1> : ['user_1', 'user_2'..],
-                                               <event_subtype_2> : ['user_3'],... },
+                        'event_subtype' : { <event_subtype_1> : ['user_1', 'user_3'],
+                                               <event_subtype_2> : ['user_3', 'user_5],... },
 
-                        'event_origin' : { <event_origin_1> : ['user_1', 'user_2'..],
-                                              <event_origin_2> : ['user_3'],... },
+                        'event_origin' : { <event_origin_1> : ['user_2', 'user_3'],
+                                              <event_origin_2> : ['user_3', 'user_4'],... },
 
                         'event_origin_type' : { <event_origin_type_1> : ['user_1', 'user_2'..],
                                                    <event_origin_type_2> : ['user_3'],... },
