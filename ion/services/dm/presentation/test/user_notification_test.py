@@ -1154,16 +1154,16 @@ class UserNotificationIntTest(IonIntegrationTestCase):
 
         # read back the notification and change it
         notification = self.unsc.read_notification(notification_id)
-        notification.origin_type = 'new_type'
+        notification.origin_types = ['new_type']
 
         self.unsc.update_notification(notification, user_id)
 
         # read back the notification and check that it got changed
         notification = self.unsc.read_notification(notification_id)
 
-        self.assertEquals(notification.origin_type, 'new_type')
-        self.assertEquals(notification.event_type, 'ResourceLifecycleEvent')
-        self.assertEquals(notification.origin, 'instrument_1')
+        self.assertEquals(notification.origin_types, ['new_type'])
+        self.assertEquals(notification.event_types, ['ResourceLifecycleEvent'])
+        self.assertEquals(notification.origins, ['instrument_1'])
 
 
     @attr('LOCOINT')
