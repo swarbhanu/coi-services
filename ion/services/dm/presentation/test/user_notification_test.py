@@ -694,14 +694,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         origins = []
         event_types = []
         for notific in notifications:
-            origins.append(notific.origin)
-            event_types.append(notific.event_type)
+            origins += notific.origins
+            event_types += notific.event_types
 
         shouldbe_origins = []
         shouldbe_event_types = []
         for notific in [notification_request_correct, notification_request_2]:
-            shouldbe_origins.append(notific.origin)
-            shouldbe_event_types.append(notific.event_type)
+            shouldbe_origins += notific.origins
+            shouldbe_event_types += notific.event_types
 
         self.assertEquals(set(origins), set(shouldbe_origins))
         self.assertEquals(set(event_types), set(shouldbe_event_types))
@@ -1659,7 +1659,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         self.assertEquals(len(res_notifs), 2)
 
         for notific in res_notifs:
-            self.assertEquals(notific.origin, data_product_id)
+            self.assertEquals(notific.origins[0], data_product_id)
             self.assertEquals(notific.temporal_bounds.end_datetime, '')
 
 
@@ -1669,7 +1669,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         res_notifs = self.unsc.get_subscriptions(resource_id=data_product_id, include_nonactive=True)
 
         for notific in res_notifs:
-            self.assertEquals(notific.origin, data_product_id)
+            self.assertEquals(notific.origins[0], data_product_id)
 
         self.assertEquals(len(res_notifs), 4)
 
