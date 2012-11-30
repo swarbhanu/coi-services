@@ -868,30 +868,35 @@ class UserNotificationService(BaseUserNotificationService):
 
         """
 
-        search_origin = 'search "origin" is "%s" from "resources_index"' % resource_id
-        ret_vals = self.discovery.parse(search_origin)
-        log.debug("Returned results: %s" % ret_vals)
+        # Using the reverse user info dictionary
+        users = self.reverse_user_info['event_origin']
 
-        notifications_all = set()
-        notifications_active = set()
+        log.debug("users found subscribed to the event origin: %s" % users)
 
-        for item in ret_vals:
-
-            if item['_type'] == 'NotificationRequest':
-                notif = self.clients.resource_registry.read(item['_id'])
-
-                if include_nonactive:
-                    # Add active or retired notification
-                    notifications_all.add(notif)
-
-                elif notif.temporal_bounds.end_datetime == '':
-                    # Add the active notification
-                    notifications_active.add(notif)
-
-        if include_nonactive:
-            return list(notifications_all)
-        else:
-            return list(notifications_active)
+#        search_origin = 'search "origin" is "%s" from "resources_index"' % resource_id
+#        ret_vals = self.discovery.parse(search_origin)
+#        log.debug("Returned results: %s" % ret_vals)
+#
+#        notifications_all = set()
+#        notifications_active = set()
+#
+#        for item in ret_vals:
+#
+#            if item['_type'] == 'NotificationRequest':
+#                notif = self.clients.resource_registry.read(item['_id'])
+#
+#                if include_nonactive:
+#                    # Add active or retired notification
+#                    notifications_all.add(notif)
+#
+#                elif notif.temporal_bounds.end_datetime == '':
+#                    # Add the active notification
+#                    notifications_active.add(notif)
+#
+#        if include_nonactive:
+#            return list(notifications_all)
+#        else:
+#            return list(notifications_active)
 
 
     def _notification_in_notifications(self, notification = None, notifications = None):
