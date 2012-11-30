@@ -234,7 +234,6 @@ class UserNotificationService(BaseUserNotificationService):
         #---------------------------------------------------------------------------------------------------
 
         # if the notification has already been registered, simply use the old id
-
         id = self._notification_in_notifications(notification, self.notifications)
 
         if id:
@@ -898,10 +897,11 @@ class UserNotificationService(BaseUserNotificationService):
     def _notification_in_notifications(self, notification = None, notifications = None):
 
         for id, notif in notifications.iteritems():
-            if notif.name == notification.name and \
-            notif.origins == notification.origins and \
-            notif.origin_types == notification.origin_types and \
-            notif.event_types == notification.event_types:
+            condition = notif.name == notification.name and\
+                        set(notif.origins) == set(notification.origins) and\
+                        set(notif.origin_types) == set(notification.origin_types) and\
+                        set(notif.event_types) == set(notification.event_types)
+            if condition:
                 return id
         return None
 
@@ -909,9 +909,9 @@ class UserNotificationService(BaseUserNotificationService):
 
         for id, notif in notifications.iteritems():
             if notif.name == old_notification.name and\
-               notif.origins == old_notification.origins and\
-               notif.origin_types == old_notification.origin_types and\
-               notif.event_types == old_notification.event_types:
+               set(notif.origins) == set(old_notification.origins) and\
+               set(notif.origin_types) == set(old_notification.origin_types) and\
+               set(notif.event_types) == set(old_notification.event_types):
                 notifications.pop(id)
                 notifications[id] = new_notification
                 break

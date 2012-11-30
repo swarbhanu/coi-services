@@ -255,48 +255,52 @@ def calculate_reverse_user_info(user_info=None):
                     continue
 
                 #-----------  event_types --------------------
-                if dict_1.has_key(notification.event_types) and notification.event_types:
+                if notification.event_types:
                     # an entry is already present for the user
                     for event_type in notification.event_types:
-                        dict_1[event_type].append(user_id)
-                        # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                        dict_1[event_type] = list(set(dict_1[event_type]))
-                else: # this user has not previously subscribed to this event type
-                    for event_type in notification.event_types:
-                        dict_1[event_type] = [user_id]
+                        if dict_1.has_key(event_type):
+                            dict_1[event_type].append(user_id)
+                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
+                            dict_1[event_type] = list(set(dict_1[event_type]))
+                        else: # no user had previously subscribed to this event subtype
+                            for event_type in notification.event_types:
+                                dict_1[event_type] = [user_id]
 
                 #---------- event_subtypes --------------------
-                if dict_2.has_key(notification.event_subtypes) and notification.event_subtypes:
+                if notification.event_subtypes:
                     # an entry is already present for the user
                     for event_subtype in notification.event_subtypes:
-                        dict_2[event_subtype].append(user_id)
-                        # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                        dict_2[event_subtype] = list(set(dict_2[event_subtype]))
-                else: # this user has not previously subscribed to this event_subtype
-                    for event_subtype in notification.event_subtypes:
-                        dict_2[event_subtype] = [user_id]
+                        if dict_2.has_key(event_subtype):
+                            dict_2[event_subtype].append(user_id)
+                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
+                            dict_2[event_subtype] = list(set(dict_2[event_subtype]))
+                        else: # no user had previously subscribed to this event subtype
+                            for event_subtype in notification.event_subtypes:
+                                dict_2[event_subtype] = [user_id]
 
                 #----------- origins --------------------------
-                if dict_3.has_key(notification.origins) and notification.origins:
+                if notification.origins:
                     # an entry is already present for the user
                     for origin in notification.origins:
-                        dict_3[origin].append(user_id)
-                        # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                        dict_3[origin] = list(set(dict_3[origin]))
-                else: # this user has not previously subscribed to this origin
-                    for origin in notification.origins:
-                        dict_3[origin] = [user_id]
+                        if dict_3.has_key(origin):
+                            dict_3[origin].append(user_id)
+                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
+                            dict_3[origin] = list(set(dict_3[origin]))
+                        else: # no user had previously subscribed to this origin
+                            for origin in notification.origins:
+                                dict_3[origin] = [user_id]
 
                 #---------- origin_types ---------------------
-                if dict_4.has_key(notification.origin_types) and notification.origin_types:
+                if notification.origin_types:
                     # an entry is already present for the user
                     for origin_type in notification.origin_types:
-                        dict_4[origin_type].append(user_id)
-                        # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                        dict_4[origin_type] = list(set(dict_4[origin_type]))
-                else: # this user has not previously subscribed to this origin_type
-                    for origin_type in notification.origin_types:
-                        dict_4[origin_type] = [user_id]
+                        if dict_4.has_key(origin_type):
+                            dict_4[origin_type].append(user_id)
+                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
+                            dict_4[origin_type] = list(set(dict_4[origin_type]))
+                        else: # no user had previously subscribed to this origin_type
+                            for origin_type in notification.origin_types:
+                                dict_4[origin_type] = [user_id]
                 #----------------------------------------------
 
                 reverse_user_info['event_type'] = dict_1
