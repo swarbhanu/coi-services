@@ -523,8 +523,8 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         origins = []
         event_types = []
         for notific in notifications:
-            origins.append(notific.origin)
-            event_types.append(notific.event_type)
+            origins += notific.origins
+            event_types += notific.event_types
 
         self.assertEquals(set(origins), set(['instrument_1', 'instrument_2']))
         self.assertEquals(set(event_types), set(['ResourceLifecycleEvent', 'DetectionEvent']))
@@ -548,7 +548,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         # Update notification and check that the user_info and reverse_user_info in UNS got reloaded
         #--------------------------------------------------------------------------------------
 
-        notification_request_correct.origin = "newly_changed_instrument"
+        notification_request_correct.origins = ["newly_changed_instrument"]
 
         self.unsc.update_notification(notification=notification_request_correct, user_id=user_id_1)
 
@@ -563,7 +563,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         # check that the notifications in the user info dictionary got updated
         update_worked = False
         for notification in proc1.user_info[user_id_1]['notifications']:
-            if notification.origin == "newly_changed_instrument":
+            if notification.origins == ["newly_changed_instrument"]:
                 update_worked = True
                 break
 
