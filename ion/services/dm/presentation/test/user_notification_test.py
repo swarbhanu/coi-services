@@ -40,7 +40,6 @@ from gevent.timeout import Timeout
 from gevent.event import Event
 import elasticpy as ep
 from datetime import datetime, timedelta
-from sets import Set
 
 use_es = CFG.get_safe('system.elasticsearch',False)
 
@@ -144,7 +143,7 @@ class UserNotificationTest(PyonTestCase):
         #------------------------------------------------------------------------------------------------------
 
         # Create a notification object
-        notification_request = NotificationRequest(name='Setting_email',
+        notification_request = NotificationRequest(name='setting_email',
             origins = ['origin'],
             origin_types = ['origin_type'],
             event_types= ['event_type'],
@@ -1051,9 +1050,9 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         n1 = self.unsc.read_notification(notification_id1)
         n2 = self.unsc.read_notification(notification_id2)
 
-        self.assertEquals(n1.event_type, notification_request_1.event_type)
-        self.assertEquals(n1.origin, notification_request_1.origin)
-        self.assertEquals(n1.origin_type, notification_request_1.origin_type)
+        self.assertEquals(set(n1.event_types), set(notification_request_1.event_types))
+        self.assertEquals(set(n1.origins), set(notification_request_1.origins))
+        self.assertEquals(set(n1.origin_types), set(notification_request_1.origin_types))
 
         #--------------------------------------------------------------------------------------
         # Create the same notification request again using UNS. Check that no duplicate notification request is made
@@ -1062,9 +1061,9 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         notification_again_id =  self.unsc.create_notification(notification=notification_request_1, user_id=user_id)
         notification_again = self.rrc.read(notification_again_id)
 
-        self.assertEquals(notification_again.event_type, notification_request_1.event_type)
-        self.assertEquals(notification_again.origin, notification_request_1.origin)
-        self.assertEquals(notification_again.origin_type, notification_request_1.origin_type)
+        self.assertEquals(set(notification_again.event_types), set(notification_request_1.event_types))
+        self.assertEquals(set(notification_again.origins), set(notification_request_1.origins))
+        self.assertEquals(set(notification_again.origin_types), set(notification_request_1.origin_types))
 
         # assert that the old id is unchanged
         self.assertEquals(notification_again_id, notification_id1)
@@ -1242,7 +1241,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         ar = gevent.event.AsyncResult()
 
         #--------------------------------------------------------------------------------
-        # Set up a subscriber to listen for that event
+        # set up a subscriber to listen for that event
         #--------------------------------------------------------------------------------
         def received_event(result, event, headers):
             log.debug("received the event in the test: %s" % event)
@@ -1291,7 +1290,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         self.unsc.set_process_batch_key(process_batch_key = newkey)
 
         #--------------------------------------------------------------------------------
-        # Set up a time for the scheduler to trigger timer events
+        # set up a time for the scheduler to trigger timer events
         #--------------------------------------------------------------------------------
         # Trigger the timer event 10 seconds later from now
         time_now = datetime.utcnow() + timedelta(seconds=15)
@@ -1303,7 +1302,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         event_publisher = EventPublisher()
 
         # this part of code is in the beginning to allow enough time for the events_index creation
-        times_of_events_published = Set()
+        times_of_events_published = set()
 
 
         def publish_events():
@@ -1366,7 +1365,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
 
 
         #--------------------------------------------------------------------------------
-        # Set up the scheduler to publish daily events that should kick off process_batch()
+        # set up the scheduler to publish daily events that should kick off process_batch()
         #--------------------------------------------------------------------------------
         sid = self.ssclient.create_time_of_day_timer(   times_of_day=times_of_day,
             expires=time.time()+25200+60,
@@ -1405,8 +1404,8 @@ class UserNotificationIntTest(IonIntegrationTestCase):
 
         log.warning("user_id: %s" % user_id)
 
-        origins_of_events = Set()
-        times = Set()
+        origins_of_events = set()
+        times = set()
 
         for event in events_for_message:
             origins_of_events.add(event.origin)
@@ -1418,7 +1417,7 @@ class UserNotificationIntTest(IonIntegrationTestCase):
 
         self.assertEquals(len(events_for_message), self.number_event_published)
         self.assertEquals(times, times_of_events_published)
-        self.assertEquals(origins_of_events, Set(['instrument_1', 'instrument_2']))
+        self.assertEquals(origins_of_events, set(['instrument_1', 'instrument_2']))
 
     @staticmethod
     def makeEpochTime(date_time):
@@ -1491,14 +1490,14 @@ class UserNotificationIntTest(IonIntegrationTestCase):
         event_types = []
         for notification in notifications:
             names.append(notification.name)
-            origins.append(notification.origin)
-            origin_types.append(notification.origin_type)
-            event_types.append(notification.event_type)
+            origins += notification.origins
+            origin_types += notification.origin_types
+            event_types += notification.event_types
 
-        self.assertEquals(Set(names), Set(['notification_1', 'notification_2']) )
-        self.assertEquals(Set(origins), Set(['instrument_1', 'instrument_2']) )
-        self.assertEquals(Set(origin_types), Set(['type_1', 'type_2']) )
-        self.assertEquals(Set(event_types), Set(['ResourceLifecycleEvent', 'DetectionEvent']) )
+        self.assertEquals(set(names), set(['notification_1', 'notification_2']) )
+        self.assertEquals(set(origins), set(['instrument_1', 'instrument_2']) )
+        self.assertEquals(set(origin_types), set(['type_1', 'type_2']) )
+        self.assertEquals(set(event_types), set(['ResourceLifecycleEvent', 'DetectionEvent']) )
 
 
     @attr('LOCOINT')
