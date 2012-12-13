@@ -68,6 +68,7 @@ class DatasetManagementService(BaseDatasetManagementService):
 
 
         cov = self._create_coverage(dataset_id, description or dataset_id, parameter_dict, spatial_domain, temporal_domain) 
+        self._save_coverage(cov)
         cov.close()
 
         return dataset_id
@@ -322,7 +323,6 @@ class DatasetManagementService(BaseDatasetManagementService):
             self.clients.resource_registry.delete_association(assoc)
 
     def _create_coverage(self, dataset_id, description, parameter_dict, spatial_domain,temporal_domain):
-
         pdict = ParameterDictionary.load(parameter_dict)
         sdom = GridDomain.load(spatial_domain)
         tdom = GridDomain.load(temporal_domain)
@@ -331,15 +331,19 @@ class DatasetManagementService(BaseDatasetManagementService):
         return scov
 
     @classmethod
-    def _get_coverage(cls,dataset_id):
+    def _save_coverage(cls, coverage):
+        coverage.flush()
+
+    @classmethod
+    def _get_coverage(cls,dataset_id,mode='w'):
         file_root = FileSystem.get_url(FS.CACHE,'datasets')
-        coverage = SimplexCoverage(file_root, dataset_id)
+        coverage = SimplexCoverage(file_root, dataset_id,mode=mode)
         return coverage
 
     @classmethod
     def _get_coverage_path(cls, dataset_id):
         file_root = FileSystem.get_url(FS.CACHE,'datasets')
-        return os.path.join(file_root, dataset_id)
+        return os.path.join(file_root, '%s' % dataset_id)
     
     @classmethod
     def _compare_pc(cls, pc1, pc2):

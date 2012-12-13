@@ -17,10 +17,10 @@ from interface.objects import AttachmentType
 
 from pyon.util.context import LocalContextMixin
 from pyon.core.exception import BadRequest 
-from pyon.public import RT, PRED
+from pyon.public import RT, PRED, CFG
 from nose.plugins.attrib import attr
 
-from interface.objects import LastUpdate, ComputedValueAvailability
+from interface.objects import StreamConfiguration
 from ion.agents.port.port_agent_process import PortAgentProcessType, PortAgentType
 from ion.services.dm.utility.granule_utils import time_series_domain
 import base64
@@ -69,8 +69,7 @@ class TestDataProductProvenance(IonIntegrationTestCase):
         # Create InstrumentModel
         instModel_obj = IonObject(RT.InstrumentModel,
                                   name='SBE37IMModel',
-                                  description="SBE37IMModel",
-                                  stream_configuration= {'parsed': 'ctd_parsed_param_dict' } )
+                                  description="SBE37IMModel" )
 
         try:
             instModel_id = self.imsclient.create_instrument_model(instModel_obj)
@@ -82,7 +81,13 @@ class TestDataProductProvenance(IonIntegrationTestCase):
 
 
         # Create InstrumentAgent
-        instAgent_obj = IonObject(RT.InstrumentAgent, name='agent007', description="SBE37IMAgent", driver_module="mi.instrument.seabird.sbe37smb.ooicore.driver", driver_class="SBE37Driver" )
+        parsed_config = StreamConfiguration(stream_name='parsed', parameter_dictionary_name='ctd_parsed_param_dict', records_per_granule=2, granule_publish_rate=5 )
+        instAgent_obj = IonObject(RT.InstrumentAgent,
+                                name='agent007',
+                                description="SBE37IMAgent",
+                                driver_module="mi.instrument.seabird.sbe37smb.ooicore.driver",
+                                driver_class="SBE37Driver",
+                                stream_configurations = [parsed_config] )
         try:
             instAgent_id = self.imsclient.create_instrument_agent(instAgent_obj)
         except BadRequest as ex:
@@ -163,13 +168,13 @@ class TestDataProductProvenance(IonIntegrationTestCase):
         #-------------------------------
 
         port_agent_config = {
-            'device_addr': 'sbe37-simulator.oceanobservatories.org',
-            'device_port': 4001,
+            'device_addr':  CFG.device.sbe37.host,
+            'device_port':  CFG.device.sbe37.port,
             'process_type': PortAgentProcessType.UNIX,
             'binary_path': "port_agent",
             'port_agent_addr': 'localhost',
-            'command_port': 4003,
-            'data_port': 4000,
+            'command_port': CFG.device.sbe37.port_agent_cmd_port,
+            'data_port': CFG.device.sbe37.port_agent_data_port,
             'log_level': 5,
             'type': PortAgentType.ETHERNET
         }

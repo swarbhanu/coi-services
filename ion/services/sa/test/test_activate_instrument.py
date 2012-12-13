@@ -14,10 +14,6 @@ from interface.services.dm.idata_retriever_service import DataRetrieverServiceCl
 from mi.instrument.seabird.sbe37smb.ooicore.driver import SBE37ProtocolEvent
 from ion.services.dm.utility.granule_utils import time_series_domain
 
-from interface.objects import AgentCommand
-from interface.objects import ProcessDefinition
-from interface.objects import ProcessStateEnum
-
 from ion.services.cei.process_dispatcher_service import ProcessStateGate
 from ion.agents.port.port_agent_process import PortAgentProcessType, PortAgentType
 
@@ -35,7 +31,9 @@ from pyon.agent.agent import ResourceAgentClient, ResourceAgentState
 from pyon.agent.agent import ResourceAgentEvent
 
 from ion.services.dm.utility.granule_utils import RecordDictionaryTool
-from interface.objects import Granule, DeviceStatusType, DeviceCommsType,StatusType
+from interface.objects import Granule, DeviceStatusType, DeviceCommsType, StatusType, StreamConfiguration
+from interface.objects import AgentCommand, ProcessDefinition, ProcessStateEnum
+
 from nose.plugins.attrib import attr
 from mock import patch
 import gevent, time
@@ -49,7 +47,7 @@ class FakeProcess(LocalContextMixin):
     process_type = ''
 
 
-@attr('SMOKE', group='sa')
+@attr('SMOKE', group='sax')
 #@patch.dict(CFG, {'endpoint':{'receive':{'timeout': 60}}})
 class TestActivateInstrumentIntegration(IonIntegrationTestCase):
 
@@ -115,17 +113,21 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         # Create InstrumentModel
         instModel_obj = IonObject(RT.InstrumentModel,
                                   name='SBE37IMModel',
-                                  description="SBE37IMModel",
-                                  stream_configuration= {'raw': 'ctd_raw_param_dict' , 'parsed': 'ctd_parsed_param_dict' })
+                                  description="SBE37IMModel")
         instModel_id = self.imsclient.create_instrument_model(instModel_obj)
         print  'new InstrumentModel id = %s ' % instModel_id
+
+
+        raw_config = StreamConfiguration(stream_name='raw', parameter_dictionary_name='ctd_raw_param_dict', records_per_granule=2, granule_publish_rate=5 )
+        parsed_config = StreamConfiguration(stream_name='parsed', parameter_dictionary_name='ctd_parsed_param_dict', records_per_granule=2, granule_publish_rate=5 )
 
         # Create InstrumentAgent
         instAgent_obj = IonObject(RT.InstrumentAgent,
                                   name='agent007',
                                   description="SBE37IMAgent",
                                   driver_module="mi.instrument.seabird.sbe37smb.ooicore.driver",
-                                  driver_class="SBE37Driver" )
+                                  driver_class="SBE37Driver",
+                                  stream_configurations = [raw_config, parsed_config])
         instAgent_id = self.imsclient.create_instrument_agent(instAgent_obj)
         print  'new InstrumentAgent id = %s' % instAgent_id
 
@@ -144,17 +146,22 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         print "test_activateInstrumentSample: new InstrumentDevice id = %s    (SA Req: L4-CI-SA-RQ-241) " %\
                   instDevice_id
 
+
         port_agent_config = {
-            'device_addr': 'sbe37-simulator.oceanobservatories.org',
-            'device_port': 4001,
+            'device_addr':  CFG.device.sbe37.host,
+            'device_port':  CFG.device.sbe37.port,
             'process_type': PortAgentProcessType.UNIX,
             'binary_path': "port_agent",
             'port_agent_addr': 'localhost',
-            'command_port': 4003,
-            'data_port': 4000,
+            'command_port': CFG.device.sbe37.port_agent_cmd_port,
+            'data_port': CFG.device.sbe37.port_agent_data_port,
             'log_level': 5,
             'type': PortAgentType.ETHERNET
         }
+
+        raw_config = StreamConfiguration(stream_name='raw', parameter_dictionary_name='ctd_raw_param_dict', records_per_granule=2, granule_publish_rate=5 )
+        parsed_config = StreamConfiguration(stream_name='parsed', parameter_dictionary_name='ctd_parsed_param_dict', records_per_granule=2, granule_publish_rate=5 )
+
 
         instAgentInstance_obj = IonObject(RT.InstrumentAgentInstance, name='SBE37IMAgentInstance',
                                           description="SBE37IMAgentInstance",
@@ -304,12 +311,10 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         self.assertEqual(state, ResourceAgentState.COMMAND)
 
         cmd = AgentCommand(command=SBE37ProtocolEvent.ACQUIRE_SAMPLE)
-        retval = self._ia_client.execute_resource(cmd)
-        print "test_activateInstrumentSample: return from sample %s" % str(retval)
-        retval = self._ia_client.execute_resource(cmd)
-        print "test_activateInstrumentSample: return from sample %s" % str(retval)
-        retval = self._ia_client.execute_resource(cmd)
-        print "test_activateInstrumentSample: return from sample %s" % str(retval)
+        for i in xrange(10):
+            retval = self._ia_client.execute_resource(cmd)
+            print "test_activateInstrumentSample: return from sample %s" % str(retval)
+
 
         print "test_activateInstrumentSample: calling reset "
         cmd = AgentCommand(command=ResourceAgentEvent.RESET)
@@ -325,7 +330,7 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         rdt = RecordDictionaryTool.load_from_granule(replay_data)
         log.debug("RDT parsed: %s", str(rdt.pretty_print()) )
         temp_vals = rdt['temp']
-        self.assertTrue(len(temp_vals) == 3)
+        self.assertTrue(len(temp_vals) == 10)
 
 
         replay_data = self.dataretrieverclient.retrieve(self.raw_dataset)
@@ -334,7 +339,7 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         log.debug("RDT raw: %s", str(rdt.pretty_print()) )
 
         raw_vals = rdt['raw']
-        self.assertTrue(len(raw_vals) == 3)
+        self.assertTrue(len(raw_vals) == 10)
 
 
         print "l4-ci-sa-rq-138"
@@ -362,9 +367,10 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
         #log.debug( "test_activateInstrumentSample: extended_product %s", str(extended_product) )
         #log.debug( "test_activateInstrumentSample: extended_product computed %s", str(extended_product.computed) )
         #log.debug( "test_activateInstrumentSample: extended_product last_granule %s", str(extended_product.computed.last_granule.value) )
-        #self.assertEqual( extended_product.computed.last_granule.value['quality_flag'], 'ok' )
-        print("Fixme: last_granule.value['quality_flag'] should be 'ok', but we got '%s'" %
-              extended_product.computed.last_granule.value['quality_flag'])
+
+        # exact text here keeps changing to fit UI capabilities.  keep assertion general...
+        self.assertTrue( 'ok' in extended_product.computed.last_granule.value['quality_flag'] )
+
         self.assertEqual( 2, len(extended_product.computed.data_datetime.value) )
 
 
@@ -376,7 +382,7 @@ class TestActivateInstrumentIntegration(IonIntegrationTestCase):
 
         t = get_ion_ts()
         self.event_publisher.publish_event(  ts_created= t,  event_type = 'DeviceStatusEvent',
-                origin = instDevice_id, state=DeviceStatusType.OUT_OF_RANGE, value = 200 )
+                origin = instDevice_id, state=DeviceStatusType.OUT_OF_RANGE, values = [200] )
         self.event_publisher.publish_event( ts_created= t,   event_type = 'DeviceCommsEvent',
                 origin = instDevice_id, state=DeviceCommsType.DATA_DELIVERY_INTERRUPTION, lapse_interval_seconds = 20 )
 

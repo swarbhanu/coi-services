@@ -4,6 +4,7 @@
 @description A module containing common utility methods used by UNS and the notification workers.
 '''
 from pyon.public import get_sys_name, CFG
+from pyon.util.arg_check import validate_is_not_none
 from pyon.util.log import log
 from pyon.core.exception import NotFound, BadRequest
 from pyon.event.event import EventPublisher
@@ -15,14 +16,6 @@ import string
 from email.mime.text import MIMEText
 from gevent import Greenlet
 import datetime
-
-ION_SMTP_SERVER = 'Mail.oceanobservatories.org'
-ION_NOTIFICATION_EMAIL_ADDRESS = 'data_alerts@oceanobservatories.org'
-
-smtp_host = CFG.get_safe('server.smtp.host', ION_SMTP_SERVER)
-smtp_port = CFG.get_safe('server.smtp.port', 25)
-smtp_sender = CFG.get_safe('server.smtp.sender', ION_NOTIFICATION_EMAIL_ADDRESS)
-smtp_password = CFG.get_safe('server.smtp.password')
 
 class FakeScheduler(object):
 
@@ -77,10 +70,11 @@ class fake_smtplib(object):
         log.warning('Sending fake message from: %s, to: "%s"' % (msg_sender,  msg_recipients))
         log.info("Fake message sent: %s" % msg)
         self.sent_mail.put((msg_sender, msg_recipients[0], msg))
+        log.debug("size of the sent_mail queue::: %s" % self.sent_mail.qsize())
 
     def quit(self):
         """
-        Its a fake client that is really just an ordinary object used only for tests. So no need to do anything here...
+        Its a fake smtp client used only for tests. So no need to do anything here...
         """
         pass
 
@@ -92,23 +86,80 @@ def setting_up_smtp_client():
     #------------------------------------------------------------------------------------
     # the default smtp server
     #------------------------------------------------------------------------------------
+    smtp_client = None
+    smtp_host = CFG.get_safe('server.smtp.host')
+    smtp_port = CFG.get_safe('server.smtp.port', 25)
+    smtp_sender = CFG.get_safe('server.smtp.sender')
+    smtp_password = CFG.get_safe('server.smtp.password')
+
     if CFG.get_safe('system.smtp',False): #Default is False - use the fake_smtp
-
-        log.debug('Using the real SMTP library to send email notifications!')
-
-#        todo for secured emails, uncomment the lines below
+        log.debug('Using the real SMTP library to send email notifications! host = %s' % smtp_host)
 
 #        smtp_client = smtplib.SMTP(smtp_host)
 #        smtp_client.ehlo()
 #        smtp_client.starttls()
 #        smtp_client.login(smtp_sender, smtp_password)
 
-        smtp_client = smtplib.SMTP(smtp_host)
+        smtp_client = smtplib.SMTP(smtp_host, smtp_port)
+        log.debug("In setting up smtp client using the smtp client: %s" % smtp_client)
+        log.debug("Message received after ehlo exchange: %s" % str(smtp_client.ehlo()))
+#        smtp_client.login(smtp_sender, smtp_password)
     else:
         log.debug('Using a fake SMTP library to simulate email notifications!')
+
         smtp_client = fake_smtplib.SMTP(smtp_host)
 
     return smtp_client
+
+def _convert_unix_to_ntp(unix_seconds = None):
+
+    if type(unix_seconds) == str: unix_seconds = int(unix_seconds.strip(" "))
+
+    diff = datetime.datetime(1970, 1, 1, 0,0,0) - datetime.datetime(1900, 1, 1, 0, 0, 0)
+
+    return unix_seconds + diff.total_seconds()
+
+def _convert_ntp_to_unix(ntp_seconds = None):
+
+    if type(ntp_seconds) == str: ntp_seconds = int(ntp_seconds.strip(" "))
+
+    diff = datetime.datetime(1970, 1, 1, 0,0,0) - datetime.datetime(1900, 1, 1, 0, 0, 0)
+
+    return ntp_seconds - diff.total_seconds()
+
+def _get_time_stamp_for_special_events(message):
+
+    time = ""
+    if message.type_ == 'DeviceStatusEvent':
+        time_stamps = []
+        for t in message.time_stamps:
+            log.debug("Got the time stamp: %s, the DeviceStatusEvent is this: %s " % (t, message))
+            # Convert to the format, 2010-09-12T06:19:54
+            time_stamps.append(_convert_to_human_readable(t))
+        # Convert the timestamp list to a string
+        time = str(time_stamps)
+
+    elif message.type_ == 'DeviceCommsEvent':
+        # Convert seconds since epoch to human readable form
+        t = message.time_stamp
+        log.debug("Got the time stamp: %s, the DeviceCommsEvent is this: %s" % (t, message))
+        # Convert to the format, 2010-09-12T06:19:54
+        time = _convert_to_human_readable(t)
+
+    else:
+        time = "None for this event type"
+
+    return time
+
+def _convert_to_human_readable(t = ''):
+
+    # Convert milli seconds since epoch to human readable form
+    if type(t) == str: t = int(t.strip(" "))
+    x = datetime.datetime.fromtimestamp( t/1000 )
+    # Convert to the format, 2010-09-12T06:19:54
+    t = x.isoformat()
+
+    return t
 
 def send_email(message, msg_recipient, smtp_client):
     '''
@@ -120,23 +171,33 @@ def send_email(message, msg_recipient, smtp_client):
 
     '''
 
-    time_stamp = message.ts_created
+    log.debug("Got type of event to notify on: %s" % message.type_)
+
+    # If DeviceStatusEvent or DeviceCommsEvent, gather the value of the time_stamp(s) attribute
+    time = _get_time_stamp_for_special_events(message)
+
+    # Get the diffrent attributes from the event message
     event = message.type_
     origin = message.origin
-    description = message.description
-
+    description = message.description or "Not provided for this event"
+    event_obj_as_string = str(message)
+    ts_created = _convert_to_human_readable(message.ts_created)
 
     #------------------------------------------------------------------------------------
     # build the email from the event content
     #------------------------------------------------------------------------------------
 
-    msg_body = string.join(("Event: %s," %  event,
+    msg_body = string.join(("Event type: %s," %  event,
                             "",
                             "Originator: %s," %  origin,
                             "",
-                            "Description: %s," % description ,
+                            "Description: %s," % description,
                             "",
-                            "Time stamp: %s," %  time_stamp,
+                            "Value of time_stamp(s) attribute of event: %s," %  time,
+                            "",
+                            "ts_created: %s," %  ts_created,
+                            "",
+                            "Event object as a dictionary: %s," %  event_obj_as_string,
                             "",
                             "You received this notification from ION because you asked to be "\
                             "notified about this event from this source. ",
@@ -147,17 +208,29 @@ def send_email(message, msg_recipient, smtp_client):
         "\r\n")
     msg_subject = "(SysName: " + get_sys_name() + ") ION event " + event + " from " + origin
 
+    log.debug("msg_body::: %s" % msg_body)
+
     #------------------------------------------------------------------------------------
     # the 'from' email address for notification emails
     #------------------------------------------------------------------------------------
+
+    ION_NOTIFICATION_EMAIL_ADDRESS = 'data_alerts@oceanobservatories.org'
+    smtp_sender = CFG.get_safe('server.smtp.sender', ION_NOTIFICATION_EMAIL_ADDRESS)
 
     msg = MIMEText(msg_body)
     msg['Subject'] = msg_subject
     msg['From'] = smtp_sender
     msg['To'] = msg_recipient
-
     log.debug("UNS sending email from %s to %s" % ( smtp_sender,msg_recipient))
-    smtp_client.sendmail(smtp_sender, [msg_recipient], msg.as_string())
+    log.debug("UNS using the smtp client: %s" % smtp_client)
+
+    try:
+        smtp_client.sendmail(smtp_sender, [msg_recipient], msg.as_string())
+    except: # Can be due to a broken connection... try to create a connection
+        smtp_client = setting_up_smtp_client()
+        log.debug("Connect again...message received after ehlo exchange: %s" % str(smtp_client.ehlo()))
+        smtp_client.sendmail(smtp_sender, [msg_recipient], msg.as_string())
+
 
 def check_user_notification_interest(event, reverse_user_info):
     '''
@@ -170,11 +243,7 @@ def check_user_notification_interest(event, reverse_user_info):
 
     @retval user_ids list
     '''
-
-    user_list_1 = []
-    user_list_2 = []
-    user_list_3 = []
-    user_list_4 = []
+    log.debug("checking for interested users. Event type: %s, reverse_user_info: %s" % (event.type_, reverse_user_info))
 
     if not isinstance(event, Event):
         raise BadRequest("The input parameter should have been an Event.")
@@ -191,19 +260,46 @@ def check_user_notification_interest(event, reverse_user_info):
     if not event or not reverse_user_info:
         raise BadRequest("Missing input parameters for method, check_user_notification_interest().")
 
+    users = set()
+
     if reverse_user_info['event_origin'].has_key(event.origin):
-        user_list_1 = reverse_user_info['event_origin'][event.origin]
+        if event.origin: # for an incoming event that has origin specified (this should be true for almost all events)
+            user_list_1 = set(reverse_user_info['event_origin'][event.origin])
+            if reverse_user_info['event_origin'].has_key(''): # for users who subscribe to any event origins
+                user_list_1 += reverse_user_info['event_origin']['']
+            users = user_list_1
+
+            log.debug("For event origin = %s, UNS got interested users here  %s" % (event.origin, users))
 
     if reverse_user_info['event_origin_type'].has_key(event.origin_type):
-        user_list_2 = reverse_user_info['event_origin_type'][event.origin_type]
+        if event.origin_type: # for an incoming event with origin type specified
+            user_list_2 = reverse_user_info['event_origin_type'][event.origin_type]
+            if reverse_user_info['event_origin_type'].has_key(''): # for users who subscribe to any event origin types
+                user_list_2 += reverse_user_info['event_origin_type']['']
+            users = set.intersection(users, user_list_2)
+
+            log.debug("For event_origin_type = %s too, UNS got interested users here  %s" % (event.origin_type, users))
 
     if reverse_user_info['event_type'].has_key(event.type_):
         user_list_3 = reverse_user_info['event_type'][event.type_]
+        if reverse_user_info['event_type'].has_key(''): # for users who subscribe to any event types
+            user_list_3 += reverse_user_info['event_type']['']
+        users = set.intersection(users, user_list_3)
+
+        log.debug("For event_type = %s too, UNS got interested users here  %s" % (event.type_, users))
+
 
     if reverse_user_info['event_subtype'].has_key(event.sub_type):
-        user_list_4 = reverse_user_info['event_subtype'][event.sub_type]
+        if event.sub_type: # for an incoming event with the sub type specified
+            user_list_4 = reverse_user_info['event_subtype'][event.sub_type]
+            if reverse_user_info['event_subtype'].has_key(''): # for users who subscribe to any event subtypes
+                user_list_4 += reverse_user_info['event_subtype']['']
+            users = set.intersection(users, user_list_4)
 
-    users = list( set.intersection(set(user_list_1), set(user_list_2), set(user_list_3), set(user_list_4)))
+            log.debug("For event_subtype = %s too, UNS got interested users here  %s" % (event.sub_type, users))
+
+
+    users = list( users)
 
     return users
 
@@ -216,14 +312,14 @@ def calculate_reverse_user_info(user_info=None):
 
     The reverse_user_info dictionary has the following form:
 
-    reverse_user_info = {'event_type' : { <event_type_1> : ['user_1', 'user_2'],
-                                             <event_type_2> : ['user_3', 'user_4'],... },
+    reverse_user_info = {'event_type' : { <event_type_1> : ['user_1', 'user_2'..],
+                                             <event_type_2> : ['user_3'],... },
 
-                        'event_subtype' : { <event_subtype_1> : ['user_1', 'user_3'],
-                                               <event_subtype_2> : ['user_3', 'user_5],... },
+                        'event_subtype' : { <event_subtype_1> : ['user_1', 'user_2'..],
+                                               <event_subtype_2> : ['user_3'],... },
 
-                        'event_origin' : { <event_origin_1> : ['user_2', 'user_3'],
-                                              <event_origin_2> : ['user_3', 'user_4'],... },
+                        'event_origin' : { <event_origin_1> : ['user_1', 'user_2'..],
+                                              <event_origin_2> : ['user_3'],... },
 
                         'event_origin_type' : { <event_origin_type_1> : ['user_1', 'user_2'..],
                                                    <event_origin_type_2> : ['user_3'],... },
@@ -255,54 +351,33 @@ def calculate_reverse_user_info(user_info=None):
                 if not isinstance(notification, NotificationRequest):
                     continue
 
-                #-----------  event_types --------------------
-                if notification.event_types:
-                    # an entry is already present for the user
-                    for event_type in notification.event_types:
-                        if dict_1.has_key(event_type):
-                            dict_1[event_type].append(user_id)
-                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                            dict_1[event_type] = list(set(dict_1[event_type]))
-                        else: # no user had previously subscribed to this event subtype
-                            for event_type in notification.event_types:
-                                dict_1[event_type] = [user_id]
+                if dict_1.has_key(notification.event_type) and notification.event_type != '':
+                    dict_1[notification.event_type].append(user_id)
+                    # to remove duplicate user names
+                    dict_1[notification.event_type] = list(set(dict_1[notification.event_type]))
+                elif notification.event_type != '':
+                    dict_1[notification.event_type] = [user_id]
 
-                #---------- event_subtypes --------------------
-                if notification.event_subtypes:
-                    # an entry is already present for the user
-                    for event_subtype in notification.event_subtypes:
-                        if dict_2.has_key(event_subtype):
-                            dict_2[event_subtype].append(user_id)
-                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                            dict_2[event_subtype] = list(set(dict_2[event_subtype]))
-                        else: # no user had previously subscribed to this event subtype
-                            for event_subtype in notification.event_subtypes:
-                                dict_2[event_subtype] = [user_id]
+                if dict_2.has_key(notification.event_subtype) and notification.event_subtype != '':
+                    dict_2[notification.event_subtype].append(user_id)
+                    # to remove duplicate user names
+                    dict_2[notification.event_subtype] = list(set(dict_2[notification.event_subtype]))
+                elif notification.event_subtype != '':
+                    dict_2[notification.event_subtype] = [user_id]
 
-                #----------- origins --------------------------
-                if notification.origins:
-                    # an entry is already present for the user
-                    for origin in notification.origins:
-                        if dict_3.has_key(origin):
-                            dict_3[origin].append(user_id)
-                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                            dict_3[origin] = list(set(dict_3[origin]))
-                        else: # no user had previously subscribed to this origin
-                            for origin in notification.origins:
-                                dict_3[origin] = [user_id]
+                if dict_3.has_key(notification.origin) and notification.origin != '':
+                    dict_3[notification.origin].append(user_id)
+                    # to remove duplicate user names
+                    dict_3[notification.origin] = list(set(dict_3[notification.origin]))
+                elif notification.origin != '':
+                    dict_3[notification.origin] = [user_id]
 
-                #---------- origin_types ---------------------
-                if notification.origin_types:
-                    # an entry is already present for the user
-                    for origin_type in notification.origin_types:
-                        if dict_4.has_key(origin_type):
-                            dict_4[origin_type].append(user_id)
-                            # to remove duplicate user names because the entry for a user_id may be present from an earlier attempt to update
-                            dict_4[origin_type] = list(set(dict_4[origin_type]))
-                        else: # no user had previously subscribed to this origin_type
-                            for origin_type in notification.origin_types:
-                                dict_4[origin_type] = [user_id]
-                #----------------------------------------------
+                if dict_4.has_key(notification.origin_type) and notification.origin_type != '':
+                    dict_4[notification.origin_type].append(user_id)
+                    # to remove duplicate user names
+                    dict_4[notification.origin_type] = list(set(dict_4[notification.origin_type]))
+                elif notification.origin_type != '':
+                    dict_4[notification.origin_type] = [user_id]
 
                 reverse_user_info['event_type'] = dict_1
                 reverse_user_info['event_subtype'] = dict_2
