@@ -303,33 +303,41 @@ def calculate_reverse_user_info(user_info=None):
                 if not isinstance(notification, NotificationRequest):
                     continue
 
-                if dict_1.has_key(notification.event_type) and notification.event_type != '':
-                    dict_1[notification.event_type].append(user_id)
-                    # to remove duplicate user names
-                    dict_1[notification.event_type] = list(set(dict_1[notification.event_type]))
-                elif notification.event_type != '':
-                    dict_1[notification.event_type] = [user_id]
+                if notification.event_types:
+                    for event_type in notification.event_types:
+                        if dict_1.has_key(notification.event_types):
+                            dict_1[event_type].append(user_id)
+                            # to remove duplicate user names
+                            dict_1[event_type] = list(set(dict_1[event_type]))
+                        else:
+                            dict_1[event_type] = [user_id]
 
-                if dict_2.has_key(notification.event_subtype) and notification.event_subtype != '':
-                    dict_2[notification.event_subtype].append(user_id)
-                    # to remove duplicate user names
-                    dict_2[notification.event_subtype] = list(set(dict_2[notification.event_subtype]))
-                elif notification.event_subtype != '':
-                    dict_2[notification.event_subtype] = [user_id]
+                if notification.event_subtypes:
+                    for event_subtype in notification.event_subtypes:
+                        if dict_2.has_key(event_subtype):
+                            dict_2[event_subtype].append(user_id)
+                            # to remove duplicate user names
+                            dict_2[event_subtype] = list(set(dict_2[event_subtype]))
+                        else:
+                            dict_2[event_subtype] = [user_id]
 
-                if dict_3.has_key(notification.origin) and notification.origin != '':
-                    dict_3[notification.origin].append(user_id)
-                    # to remove duplicate user names
-                    dict_3[notification.origin] = list(set(dict_3[notification.origin]))
-                elif notification.origin != '':
-                    dict_3[notification.origin] = [user_id]
+                if notification.origins:
+                    for origin in notification.origins:
+                        if dict_3.has_key(origin):
+                            dict_3[origin].append(user_id)
+                            # to remove duplicate user names
+                            dict_3[origin] = list(set(dict_3[origin]))
+                        else:
+                            dict_3[origin] = [user_id]
 
-                if dict_4.has_key(notification.origin_type) and notification.origin_type != '':
-                    dict_4[notification.origin_type].append(user_id)
-                    # to remove duplicate user names
-                    dict_4[notification.origin_type] = list(set(dict_4[notification.origin_type]))
-                elif notification.origin_type != '':
-                    dict_4[notification.origin_type] = [user_id]
+                if notification.origin_types:
+                    for origin_type in notification.origin_types:
+                        if dict_4.has_key(origin_type):
+                            dict_4[origin_type].append(user_id)
+                            # to remove duplicate user names
+                            dict_4[origin_type] = list(set(dict_4[origin_type]))
+                        else:
+                            dict_4[origin_type] = [user_id]
 
                 reverse_user_info['event_type'] = dict_1
                 reverse_user_info['event_subtype'] = dict_2
