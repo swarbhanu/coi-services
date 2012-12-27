@@ -191,8 +191,6 @@ class UserNotificationService(BaseUserNotificationService):
         """
 
         def process(event_msg, headers):
-            assert event_msg.origin == process_batch_key
-
             self.end_time = UserNotificationService.makeEpochTime(self.__now())
 
             # run the process_batch() method
@@ -205,6 +203,7 @@ class UserNotificationService(BaseUserNotificationService):
         """
         self.batch_processing_subscriber = EventSubscriber(
             event_type="ResourceEvent",
+            queue_name='user_notification',
             origin=process_batch_key,
             callback=process
         )
